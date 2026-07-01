@@ -91,6 +91,11 @@
     .d-sender-email { font-size: 12px; color: var(--text-muted); display: block; margin-top: 2px; }
     .detail-body { font-size: 14px; color: #222; line-height: 1.6; word-wrap: break-word; }
 
+    /* 剧情专属样式 */
+    .manic-text { margin-top: 30px; font-size: 14px; line-height: 1.2; color: #000; font-family: monospace; letter-spacing: -0.5px; word-break: break-all; }
+    .fatal-link { display: inline-block; margin-top: 24px; font-weight: bold; color: var(--primary); cursor: pointer; text-decoration: underline; font-size: 15px; padding: 10px 0; }
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; color: var(--text-muted); text-align: center; }
+
     /* === 附件 UI 样式 (日常版) === */
     .attachment-section { margin-top: 32px; border-top: 1px solid #f2f2f2; padding-top: 20px; }
     .attachment-chip { display: inline-flex; align-items: center; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 16px 8px 12px; cursor: pointer; transition: background 0.2s; background: #fff; }
@@ -100,7 +105,7 @@
     .attach-name { font-size: 14px; font-weight: 500; color: var(--text-main); }
     .attach-size { font-size: 12px; color: var(--text-muted); }
 
-    /* === 附件预览浮层 (仿 Word 在线预览版) === */
+    /* === 附件预览浮层 (多页 Word 模拟器) === */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(2px); }
     .modal-content { background: #f3f2f1; width: 100%; max-width: 800px; height: 85vh; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
     .modal-header { background: #2b579a; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; color: #fff; height: 50px; flex-shrink: 0; }
@@ -108,20 +113,15 @@
     .modal-close { color: rgba(255,255,255,0.8); cursor: pointer; transition: color 0.2s; }
     .modal-close:hover { color: #fff; }
     
-    /* 模拟白纸 A4 文档 */
-    .modal-body-container { flex: 1; overflow-y: auto; padding: 40px; display: flex; justify-content: center; }
-    .document-page { background: #ffffff; width: 100%; max-width: 600px; padding: 40px 50px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); border-radius: 2px; color: #333; font-family: "SimSun", "Songti SC", serif; }
+    .modal-body-container { flex: 1; overflow-y: auto; padding: 40px 0; display: flex; flex-direction: column; align-items: center; gap: 30px; }
+    .document-page { background: #ffffff; width: 90%; max-width: 650px; padding: 60px 50px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); border-radius: 2px; color: #333; font-family: "SimSun", "Songti SC", serif; min-height: 800px; position: relative; }
     
     .doc-title { text-align: center; font-size: 22px; font-weight: bold; margin-bottom: 30px; font-family: "Microsoft YaHei", sans-serif; }
-    .doc-subtitle { font-size: 14px; margin-bottom: 20px; color: #666; display: flex; justify-content: space-between; font-family: "Microsoft YaHei", sans-serif; }
+    .doc-subtitle { font-size: 14px; margin-bottom: 20px; color: #666; display: flex; justify-content: space-between; font-family: "Microsoft YaHei", sans-serif; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
     .doc-h2 { font-size: 16px; font-weight: bold; margin: 24px 0 12px 0; font-family: "Microsoft YaHei", sans-serif; }
     .doc-p { font-size: 14px; line-height: 1.8; margin-bottom: 12px; text-indent: 2em; }
     .doc-highlight { background: #fff2cc; padding: 2px 4px; }
-
-    /* 剧情专属样式 */
-    .manic-text { margin-top: 30px; font-size: 14px; line-height: 1.2; color: #000; font-family: monospace; letter-spacing: -0.5px; word-break: break-all; }
-    .fatal-link { display: inline-block; margin-top: 24px; font-weight: bold; color: var(--primary); cursor: pointer; text-decoration: underline; font-size: 15px; padding: 10px 0; }
-    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; color: var(--text-muted); text-align: center; }
+    .doc-footer { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); font-size: 12px; color: #999; }
 
     /* 响应式适配 */
     @media (max-width: 768px) {
@@ -133,8 +133,8 @@
         .search-bar { margin: 0; border-radius: 24px; background: #edf2fc; padding: 0 8px; }
         .email-detail { padding: 16px; }
         .detail-subject { font-size: 20px; }
-        .modal-body-container { padding: 16px; }
-        .document-page { padding: 20px; }
+        .modal-body-container { padding: 20px 0; gap: 20px; }
+        .document-page { padding: 40px 20px; min-height: auto; }
     }
 
     /* 黑屏崩坏转场 */
@@ -225,35 +225,46 @@
     </div>
 </div>
 
-<!-- 附件预览浮层 (仿 Word) -->
+<!-- 附件预览浮层 (仿 Word 多页滚动) -->
 <div class="modal-overlay" id="attachment-modal" onclick="closeAttachment(event)">
     <div class="modal-content" onclick="event.stopPropagation()">
         <div class="modal-header">
             <div class="modal-title">
                 <span class="material-symbols-outlined" style="font-size: 20px;">description</span>
-                数据清洗测试任务汇报.docx
+                数据离线标注日志_第04批次.docx
             </div>
             <span class="material-symbols-outlined modal-close" onclick="closeAttachment()">close</span>
         </div>
         
         <div class="modal-body-container">
-            <!-- 模拟的 A4 白纸内容 -->
+            <!-- 第一页 -->
             <div class="document-page">
-                <div class="doc-title">神经流形项目组：入职测试汇报</div>
+                <div class="doc-title">临床影像病灶标注作业日志</div>
                 <div class="doc-subtitle">
-                    <span>汇报人：<span style="background:#000; color:#000; user-select:none;">██</span></span>
+                    <span>汇报人：<span style="background:#000; color:#000; user-select:none;">██</span> (实习操作员)</span>
                     <span id="doc-date-span"></span>
                 </div>
                 
-                <div class="doc-h2">一、 任务概述</div>
-                <div class="doc-p">按照研发组下发的《二期数据处理规范》，本次任务共接收后台原始日志节点 1402 个。主要工作目标是对这些原始数据进行排版清洗、剔除无效冗余项，最终输出符合前端接口调用规范的 JSON 静态文件。</div>
+                <div class="doc-h2">一、 标注对象：</div>
+                <div class="doc-p">本次任务为第 04 批次离线影像病灶梳理。共计分配 1400 例神经影像切片，目标为标记并清洗所有影响手术进度的异常阴影。</div>
                 
-                <div class="doc-h2">二、 异常数据处理说明</div>
-                <div class="doc-p">在执行自动化脚本时，我发现有部分数据（特别是第8分区段）频繁抛出运行超时异常。通过排查日志发现，这批节点的数据流存在高频的数值跳动，无法稳定缓存。</div>
-                <div class="doc-p">为了不影响整体打包进度，我查阅了开发文档，<span class="doc-highlight">已将这些持续变动的异常节点直接执行了逻辑截断与强制平滑处理（即将变动阈值强行归零）</span>。处理后，所有报错均已解决，系统资源占用率恢复正常。</div>
+                <div class="doc-h2">二、 异常值处理记录：</div>
+                <div class="doc-p">在复核 3D 断层扫描图像时，发现部分区段（特别是内侧额叶）存在大量不规则的病灶影像。这些病灶的边缘极度模糊，并在扫描回放中呈现出疑似震颤的物理特征。</div>
+                <div class="doc-p">为了确保术后神经导联的连接稳定性，不干扰主控系统的绝对平滑运行，我已按照《临床操作规范》手册，将这些病灶坐标全部标记为“无效干扰项”。</div>
+                <div class="doc-highlight doc-p">处理方案说明：所有具备跳动特征的异常增生组织已执行虚拟物理切除与病灶清扫。由于切除过程极其平滑，受损神经束已无任何残留电信号，确认标注完成。</div>
+                <div class="doc-footer">- 1 -</div>
+            </div>
+
+            <!-- 第二页 -->
+            <div class="document-page">
+                <div class="doc-h2">三、 遗留问题与交接：</div>
+                <div class="doc-p">最近在实验室微信群里一直联系不上陈宇师兄，他之前负责的临床数据接口一直处于离线状态。关于他在清理这些病灶时的手术习惯，以及针对这类“高频跳动阴影”的深层判定逻辑，我还有一些细节想请教，但一直没得到回复。</div>
+                <div class="doc-p">目前剩余批次的清理工作已全部完成，所有病灶影像均已静态化。随文附上我本次切除过程中的操作参数。</div>
                 
-                <div class="doc-h2">三、 交付总结</div>
-                <div class="doc-p">经过测试，所有 1402 个数据节点目前均已处于完全静止的稳定状态，符合“绝对静态化”的验收要求。输出文件包已同步上传至科研中心 FTP 服务器，请查收。如果有需要修改的代码逻辑，请随时联系我。</div>
+                <div class="doc-h2">四、 附件总结：</div>
+                <div class="doc-p">总计 1400 例切片，已全部清空病灶干扰。系统运行状况评估：稳定。</div>
+                <div style="margin-top: 100px; text-align: right;">实习生：<span style="background:#000; color:#000; user-select:none;">██</span></div>
+                <div class="doc-footer">- 2 -</div>
             </div>
         </div>
         
@@ -296,7 +307,6 @@ const timeTrash = formatDate(getPastDate(5));
 const timeSpam2 = formatDate(getPastDate(12)); 
 const timeSpam3 = formatDate(getPastDate(18)); 
 
-// 给 Word 文档写个日期
 document.getElementById('doc-date-span').innerText = `提交日期：${timeSent}`;
 
 const colors = ['#e53935', '#d81b60', '#8e24aa', '#3949ab', '#039be5', '#00897b', '#43a047', '#f4511e'];
@@ -318,14 +328,14 @@ const emailData = {
             body: `
                 <p>尊敬的候选人，您好：</p>
                 <p>经过系统检索与简历初筛，我们很高兴地通知您，您已通过市第十八人类临床医院 - 联合科研中心的入职审核。</p>
-                <p>沈知行教授亲自查阅了您提交的入职测试报告。系统判定，您在处理复杂数据时展现出了极高效率与冷静的执行力。您的数据处理逻辑（尤其是对异常冗余项的果断平滑处理）完全符合我们地下操作台的标准。</p>
-                <p>您的工作职责将正式从前端数据清洗，转移至真正的临床中枢控制台。您需要继续保持这种效率，为即将接入的样本切除深层的杂波。</p>
+                <p>沈知行教授亲自查阅了您提交的《临床影像病灶标注作业日志》。系统判定，您在处理复杂生理指标时展现出了极高效率与冷静的执行力。您的处理逻辑（尤其是对异常冗余项的果断物理切除）完全符合我们地下操作台的最高标准。</p>
+                <p>您的工作职责将正式从前端的离线数据标注，转移至真实的临床中枢控制台。您需要继续保持这种效率，为即将接入的活体样本切除深层的杂波。</p>
                 <p><strong>在您接受 Offer 前，请确认：</strong></p>
                 <ol>
                     <li style="margin-bottom:8px">您将严格按照系统的指令与倒计时，执行所有的切除与格式化操作。</li>
-                    <li>对任何运行异常的样本，不予迟疑，立刻截断。</li>
+                    <li>对任何运行异常的生理样本，不予迟疑，立刻截断。</li>
                 </ol>
-                <p>如果您确认接受该岗位，请点击下方链接，您的专属工作站将立即初始化。</p>
+                <p>如果您确认接受该岗位，请点击下方链接，您的专属物理工作站将立即初始化。</p>
                 <div style="margin-top: 32px;">
                     <span class="fatal-link" onclick="triggerGlitch()">[ 接受权限转移并初始化工作站 ]</span>
                 </div>
@@ -338,14 +348,14 @@ const emailData = {
             id: 'sent1', status: 'read', 
             senderName: '我', senderEmail: '<applicant_0104@gmail.com>',
             receiverStr: '发送至 沈知行教授 <shen.zx@18th-clinical.local>',
-            subject: '附件：数据清洗测试任务汇报', 
+            subject: '附件：数据离线标注测试日志提交', 
             time: timeSent, 
             body: `
                 <p>沈教授您好：</p>
-                <p>我是之前申请助理岗位的实习生。附件是我整理好的入职测试汇报文档。</p>
-                <p>那 1400 多条数据的格式已经全部清洗完毕了。中间有几个区段的数据（特别是第8组）老是抛出变动异常，导致程序卡死。为了符合您之前提到的“绝对静态”要求，我直接写了个脚本，把那些频繁跳动的异常值全部强行截断清空了。</p>
-                <p>目前测试跑通了，系统已经不会再报错。如果有做得不对的地方请随时指正。</p>
-                <p>另外，陈宇学长离校之前好像没交接我这边的权限，我最近联系不上他，麻烦您之后帮我开通一下系统的下一级权限。</p>
+                <p>我是之前申请临床助理岗位的医学实习生。附件是我整理好的入职测试汇报文档。</p>
+                <p>那 1400 多例断层影像的病灶标注已经全部清洗完毕了。中间有几个区段的数据（特别是内侧额叶）总是存在不规则的跳动阴影，严重影响了画面的整洁度。为了符合您之前提到的“绝对静态”要求，我已经将那些频繁跳动的异常组织全部执行了标记清除。</p>
+                <p>目前测试复盘完毕，影像已完全静态化。如果有处理得不对的地方请随时指正。</p>
+                <p>另外，陈宇师兄离校之前好像没交接我这边的权限，我最近联系不上他，麻烦您之后帮我开通一下系统的下一级权限。</p>
                 <br>
                 <p>—— <span style="background: #202124; color: #202124; user-select: none;">██</span></p>
                 
@@ -353,13 +363,13 @@ const emailData = {
                     <div class="attachment-chip" onclick="openAttachment()">
                         <span class="material-symbols-outlined attach-icon">description</span>
                         <div class="attach-info">
-                            <span class="attach-name">数据清洗测试任务汇报.docx</span>
+                            <span class="attach-name">数据离线标注日志_第04批次.docx</span>
                             <span class="attach-size">24 KB</span>
                         </div>
                     </div>
                 </div>
             `,
-            snippet: '沈教授您好：我是之前申请助理岗位的实习生。附件是我整理好的入职测试汇报文档...'
+            snippet: '沈教授您好：我是之前申请临床助理岗位的医学实习生。附件是我整理好的入职测试汇报文档...'
         }
     ],
     spam: [
@@ -400,8 +410,8 @@ for(let i=0; i<10; i++) {
         body: `
             <p>小林，如果你能看到这封邮件，帮我去跟辅导员说一声。</p>
             <p>我昨天从监控屏幕的倒影里，看到院里发的通报了。那上面说我因为精神衰弱申请了退学。那是假的，<strong>我根本没有签过任何退学申请！</strong></p>
-            <p>我这段时间只是在跟进沈教授的数据清洗测试项目。我一直在这个项目里，一直在地下，从来没有离开过。但我现在找不到出口了，门禁卡也被注销了。</p>
-            <p>帮帮我，去跟辅导员说我还在做测试，我马上就能完成数据的剥离了。</p>
+            <p>我这段时间只是在跟进沈教授的活体标注项目。我一直在这个项目里，一直在地下，从来没有离开过。但我现在找不到出口了，门禁卡也被注销了。</p>
+            <p>帮帮我，去跟辅导员说我还在做切除，我马上就能完成神经的剥离了。</p>
             <p>看到邮件回我一下，他们快交班了。</p>
             <div class="manic-text">${manicString}</div>
         `,
@@ -491,7 +501,6 @@ function backToList() {
     else { detailView.style.display = 'none'; listView.style.display = 'flex'; }
 }
 
-// 附件控制逻辑
 function openAttachment() {
     document.getElementById('attachment-modal').style.display = 'flex';
 }
