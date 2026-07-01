@@ -198,7 +198,7 @@
                     <div>
                         <span id="d-sender-name" class="d-sender-name"></span>
                     </div>
-                    <span id="d-sender-email" class="d-sender-email">发送至 我</span>
+                    <span id="d-sender-email" class="d-sender-email">发送至 林真</span>
                 </div>
             </div>
 
@@ -221,6 +221,35 @@
 </div>
 
 <script>
+// === 动态时间生成引擎 ===
+const now = new Date();
+
+// 格式化：当天显示 "HH:MM"
+function formatToday(date) {
+    const h = date.getHours().toString().padStart(2, '0');
+    const m = date.getMinutes().toString().padStart(2, '0');
+    return `${h}:${m}`;
+}
+
+// 格式化：历史日期显示 "M月D日"
+function formatDate(date) {
+    return `${date.getMonth() + 1}月${date.getDate()}日`;
+}
+
+// 获取过去第 N 天的 Date 对象
+function getPastDate(daysAgo) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - daysAgo);
+    return d;
+}
+
+// 计算各封邮件的动态时间
+const timeOffer = formatToday(now);            // 当前系统时间（致命同步）
+const timeSpam1 = "昨天";                      // 昨天
+const timeSpam2 = formatDate(getPastDate(12)); // 12天前的日常订阅账单
+const timeSpam3 = formatDate(getPastDate(18)); // 18天前的学长求救信
+const timeTrash = formatDate(getPastDate(5));  // 5天前的学校通知
+
 // 头像颜色池
 const colors = ['#e53935', '#d81b60', '#8e24aa', '#3949ab', '#039be5', '#00897b', '#43a047', '#f4511e'];
 
@@ -231,15 +260,16 @@ function getAvatarChar(name) {
     return cleanName ? cleanName.charAt(0).toUpperCase() : '?';
 }
 
-// 模拟邮件数据库
+// === 模拟邮件数据库 ===
 const emailData = {
     inbox: [
         {
             id: 'offer1', status: 'unread',
             senderName: '第十八临床研究中心', senderEmail: '<admin@18th-clinical.local>',
-            subject: '【录用通知】深层神经流形与BCI项目 - 核心操作员', time: '23:59',
+            subject: '【录用通知】深层神经流形与BCI项目 - 核心操作员', 
+            time: timeOffer, // 动态当前时间！
             body: `
-                <p>尊敬的候选人，您好：</p>
+                <p>尊敬的候选人 林真，您好：</p>
                 <p>经过脑波阻抗测试与三轮极端逻辑压力面试，我们非常荣幸地通知您：您已正式被<strong>市第十八人类临床医院 - 联合科研中心</strong>录用。</p>
                 <p>首席科学家沈知行教授亲自查阅了您的背景数据。系统判定，您在处理高维数据模型时，展现出了一种近乎冷酷的绝对理智（Absolute Emotional Decoupling）。</p>
                 <p>我们需要您从幕后的数据分析，转入地下的真实操作台。</p>
@@ -254,19 +284,19 @@ const emailData = {
                     <span class="fatal-link" onclick="triggerGlitch()">[ 接受权限转移并初始化太一工作站 ]</span>
                 </div>
             `,
-            snippet: '尊敬的候选人，您好：经过脑波阻抗测试与三轮极端逻辑压力面试...'
+            snippet: '尊敬的候选人 林真，您好：经过脑波阻抗测试与三轮极端逻辑压力面试...'
         }
     ],
     spam: [
         {
             id: 'spam1', status: 'unread', senderName: 'Mailer-Daemon', senderEmail: '<postmaster@local>',
-            subject: 'Undelivered Mail Returned to Sender', time: '昨天',
+            subject: 'Undelivered Mail Returned to Sender', time: timeSpam1,
             body: '<p>诊断代码：550 5.1.1<br>错误描述：目标服务器拒绝接收连接。SSL 握手失败。对方主机时钟与当前标准时间存在严重偏差，无法完成时钟同步 (NTP Error: Time flow anomaly)。</p>',
             snippet: '诊断代码：550 5.1.1 错误描述：目标服务器拒绝接收连接...'
         },
         {
             id: 'spam2', status: 'read', senderName: 'Apple 订阅服务', senderEmail: '<no-reply@apple.com>',
-            subject: '[收据] 您的 iCloud+ 200GB 储存空间方案账单', time: '6月18日',
+            subject: '[收据] 您的 iCloud+ 200GB 储存空间方案账单', time: timeSpam2,
             body: '<p>您已成功续订 iCloud+ 200GB 储存空间方案。<br>扣款金额：￥21.00<br>感谢您的使用。</p>',
             snippet: '您已成功续订 iCloud+ 200GB 储存空间方案。扣款金额...'
         }
@@ -274,7 +304,7 @@ const emailData = {
     trash: [
         {
             id: 'trash1', status: 'read', senderName: '校园网服务中心', senderEmail: '<network@student.edu.cn>',
-            subject: '【通知】您的校园一卡通即将过期', time: '上周四',
+            subject: '【通知】您的校园一卡通即将过期', time: timeTrash,
             body: '<p>同学您好，检测到您即将毕业，您的校园一卡通将于本月底自动注销。如有未结清欠款，请尽快前往后勤处办理。</p>',
             snippet: '同学您好，检测到您即将毕业，您的校园一卡通将于本月底自动注销...'
         }
@@ -282,13 +312,13 @@ const emailData = {
     sent: [], drafts: []
 };
 
-// 动态生成深渊循环邮件
+// 动态生成深渊循环邮件（时间全部锁定在 18 天前）
 const manicString = "我没有退学".repeat(150);
 for(let i=0; i<10; i++) {
     emailData.spam.push({
         id: 'spam_loop_' + i, status: 'unread',
         senderName: 'Unknown_Sender', senderEmail: '<不可见的地址>',
-        subject: '我没有退学我没有退学我没有退学', time: '6月12日',
+        subject: '我没有退学我没有退学我没有退学', time: timeSpam3,
         body: `
             <p>小林，如果你能看到这封邮件，帮我去跟辅导员说一声。</p>
             <p>我昨天从监控屏幕的倒影里，看到院里发的通报了。那上面说我因为精神衰弱申请了退学。那是假的，<strong>我根本没有签过任何退学申请！</strong></p>
@@ -301,27 +331,28 @@ for(let i=0; i<10; i++) {
     });
 }
 
+// === 以下为 UI 与事件控制逻辑 ===
 const listView = document.getElementById('listView');
 const detailView = document.getElementById('detailView');
 const sidebar = document.getElementById('sidebar');
 const sidebarOverlay = document.querySelector('.sidebar-overlay');
 
-// 移动端侧边栏切换
 function toggleSidebar() {
-    if(window.innerWidth > 768) return; // PC端点击汉堡菜单无响应或自行实现折叠
+    if(window.innerWidth > 768) return; 
     sidebar.classList.toggle('open');
     sidebarOverlay.classList.toggle('show');
 }
 
-// 检查是否在移动设备显示Logo
 if(window.innerWidth <= 768) { document.getElementById('mobile-logo').style.display = 'flex'; }
 
-// 加载邮件列表
 function loadFolder(folderName, element) {
     if(window.innerWidth <= 768 && sidebar.classList.contains('open')) toggleSidebar();
     
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    if(element) element.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active', 'active-bold'));
+    if(element) {
+        element.classList.add('active');
+        if(folderName === 'inbox' || folderName === 'spam') element.classList.add('active-bold');
+    }
     
     detailView.style.display = 'none';
     listView.style.display = 'flex';
@@ -337,11 +368,10 @@ function loadFolder(folderName, element) {
         return;
     }
 
-    emails.forEach((email, index) => {
+    emails.forEach((email) => {
         const item = document.createElement('div');
         item.className = `email-item ${email.status}`;
         
-        // 分配固定的头像颜色
         const color = colors[email.senderName.length % colors.length];
         const avatarChar = getAvatarChar(email.senderName);
 
@@ -361,7 +391,6 @@ function loadFolder(folderName, element) {
     });
 }
 
-// 打开详情页
 function openEmail(email, bgColor, avatarChar) {
     if(email.status === 'unread') email.status = 'read';
     listView.style.display = 'none';
@@ -369,7 +398,7 @@ function openEmail(email, bgColor, avatarChar) {
     
     document.getElementById('d-subject').innerText = email.subject;
     document.getElementById('d-sender-name').innerText = email.senderName;
-    document.getElementById('d-sender-email').innerText = `发件人: ${email.senderEmail} · 发送至 我`;
+    document.getElementById('d-sender-email').innerText = `发件人: ${email.senderEmail} · 发送至 林真`;
     document.getElementById('d-time').innerText = email.time;
     document.getElementById('d-body').innerHTML = email.body;
     
@@ -378,7 +407,6 @@ function openEmail(email, bgColor, avatarChar) {
     dAvatar.style.backgroundColor = bgColor || '#9c27b0';
 }
 
-// 返回列表
 function backToList() {
     const activeNav = document.querySelector('.nav-item.active');
     if(activeNav && activeNav.innerText.includes('收件箱')) loadFolder('inbox', activeNav);
@@ -387,7 +415,6 @@ function backToList() {
     else { detailView.style.display = 'none'; listView.style.display = 'flex'; }
 }
 
-// 核心转场特效
 function triggerGlitch() {
     const glitchOverlay = document.getElementById('glitch-overlay');
     const glitchGrid = document.getElementById('glitch-grid');
@@ -395,16 +422,15 @@ function triggerGlitch() {
     
     glitchOverlay.style.display = 'flex';
     
-    // 刺耳高频音模拟视觉
     setTimeout(() => { glitchGrid.classList.add('show'); }, 300);
     setTimeout(() => { glitchSys.classList.add('show'); }, 1500);
     setTimeout(() => { 
         alert("转场结束，即将加载 3D 医疗终端... (后续游戏流程)"); 
-        location.reload(); 
+        // 实际游戏中可以在这里跳转到游戏主场景的 HTML 文件
+        // location.href = "game.html"; 
     }, 4000);
 }
 
-// 初始化加载收件箱
 window.onload = () => loadFolder('inbox', document.querySelector('.nav-item.active'));
 </script>
 </body>
