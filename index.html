@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>收件箱 (1) - WebMail</title>
+<style>
+    /* 基础重置与变量 */
+    :root {
+        --bg-color: #f6f8fc;
+        --sidebar-bg: #f6f8fc;
+        --text-main: #202124;
+        --text-muted: #5f6368;
+        --border-color: #e0e0e0;
+        --hover-bg: #f1f3f4;
+        --primary-blue: #1a73e8;
+        --unread-bg: #ffffff;
+        --read-bg: #f2f6fc;
+    }
+    
+    body, html { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--text-main); background: var(--bg-color); overflow: hidden; transition: filter 0.1s, background 0.1s; }
+
+    /* 顶栏 */
+    .top-bar { height: 64px; display: flex; align-items: center; padding: 0 20px; background: white; border-bottom: 1px solid var(--border-color); }
+    .logo { font-size: 20px; font-weight: 500; color: var(--text-muted); margin-left: 16px; }
+    .search-box { margin-left: 80px; background: var(--hover-bg); padding: 12px 24px; border-radius: 8px; width: 600px; color: var(--text-muted); font-size: 15px; }
+
+    /* 主体布局 */
+    .app-container { display: flex; height: calc(100vh - 64px); }
+    
+    /* 侧边栏 */
+    .sidebar { width: 256px; padding: 16px 0; background: var(--sidebar-bg); }
+    .nav-item { padding: 12px 24px 12px 32px; display: flex; justify-content: space-between; cursor: pointer; color: var(--text-main); border-radius: 0 24px 24px 0; margin-right: 16px; font-size: 14px; }
+    .nav-item:hover { background: var(--hover-bg); }
+    .nav-item.active { background: #e8f0fe; color: var(--primary-blue); font-weight: 600; }
+    .nav-item.bold-text { font-weight: bold; }
+
+    /* 内容区 */
+    .main-content { flex: 1; background: white; border-radius: 16px 16px 0 0; margin: 0 16px 0 0; overflow-y: auto; box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3); }
+
+    /* 邮件列表视图 */
+    .email-list { display: flex; flex-direction: column; }
+    .email-item { display: flex; padding: 12px 16px; border-bottom: 1px solid var(--border-color); cursor: pointer; align-items: center; font-size: 14px; }
+    .email-item.unread { background: var(--unread-bg); font-weight: bold; color: var(--text-main); }
+    .email-item.read { background: var(--read-bg); color: var(--text-muted); }
+    .email-item:hover { box-shadow: inset 1px 0 0 #dadce0, inset -1px 0 0 #dadce0, 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15); z-index: 1; transform: scale(1); }
+    .sender { width: 200px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .subject { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 16px; }
+    .time { width: 80px; flex-shrink: 0; text-align: right; font-size: 12px; }
+
+    /* 邮件详情视图 */
+    .email-detail { padding: 32px 40px; display: none; line-height: 1.6; }
+    .detail-header { margin-bottom: 24px; }
+    .detail-subject { font-size: 22px; font-weight: 400; margin: 0 0 16px 0; }
+    .detail-sender-info { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--text-muted); }
+    .sender-name { font-weight: bold; color: var(--text-main); margin-right: 8px; }
+    .detail-body { font-size: 14px; color: #222; }
+    
+    /* 崩溃文字特效 */
+    .manic-text { margin-top: 40px; word-wrap: break-word; font-size: 14px; line-height: 1.2; color: #000; font-family: monospace; }
+    
+    /* 致命链接 */
+    .fatal-link { display: inline-block; margin-top: 30px; font-weight: bold; color: var(--primary-blue); cursor: pointer; text-decoration: underline; font-size: 15px; }
+
+    /* 黑屏崩坏特效 (点击链接后触发) */
+    body.glitch-mode { filter: grayscale(100%) contrast(200%); background: #000; color: #fff; pointer-events: none; }
+    body.glitch-mode .top-bar, body.glitch-mode .sidebar { opacity: 0; }
+    body.glitch-mode .main-content { background: #000; box-shadow: none; border: none; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+    <div style="width: 24px; height: 24px; background: #5f6368; mask: url('data:image/svg+xml;utf8,<svg viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z\"/></svg>') no-repeat center; -webkit-mask: url('data:image/svg+xml;utf8,<svg viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z\"/></svg>') no-repeat center;"></div>
+    <div class="logo">WebMail</div>
+    <div class="search-box">在邮件中搜索...</div>
+</div>
+
+<div class="app-container">
+    <div class="sidebar">
+        <div class="nav-item active bold-text" onclick="loadFolder('inbox', this)">
+            <span>📥 收件箱</span><span>1</span>
+        </div>
+        <div class="nav-item" onclick="loadFolder('sent', this)">
+            <span>📤 已发送</span><span></span>
+        </div>
+        <div class="nav-item" onclick="loadFolder('drafts', this)">
+            <span>📝 草稿箱</span><span></span>
+        </div>
+        <div class="nav-item bold-text" onclick="loadFolder('spam', this)">
+            <span>🚫 垃圾邮件</span><span>12</span>
+        </div>
+        <div class="nav-item" onclick="loadFolder('trash', this)">
+            <span>🗑️ 回收站</span><span>1</span>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <!-- 列表视图 -->
+        <div id="listView" class="email-list"></div>
+        
+        <!-- 详情视图 -->
+        <div id="detailView" class="email-detail">
+            <button onclick="backToList()" style="background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 0 0 20px 0; font-size: 14px;">← 返回列表</button>
+            <div class="detail-header">
+                <h2 id="d-subject" class="detail-subject"></h2>
+                <div class="detail-sender-info">
+                    <div>
+                        <span id="d-sender-name" class="sender-name"></span>
+                        <span id="d-sender-email">&lt;&gt;</span>
+                    </div>
+                    <div id="d-time"></div>
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">发送至 applicant_0104@gmail.com</div>
+            </div>
+            <div id="d-body" class="detail-body"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 数据库模拟
+const emailData = {
+    inbox: [
+        {
+            id: 'offer1',
+            status: 'unread',
+            senderName: '第十八临床研究中心',
+            senderEmail: '<admin@18th-clinical.local>',
+            subject: '【录用通知】深层神经流形与BCI项目 - 核心操作员',
+            time: '23:59',
+            body: `
+                <p>尊敬的候选人，您好：</p>
+                <p>经过脑波阻抗测试与三轮极端逻辑压力面试，我们非常荣幸地通知您：您已正式被<strong>市第十八人类临床医院 - 联合科研中心</strong>录用。</p>
+                <p>首席科学家沈知行教授亲自查阅了您的背景数据。系统判定，您在处理高维数据模型时，展现出了一种近乎冷酷的绝对理智（Absolute Emotional Decoupling）。</p>
+                <p>我们需要您从幕后的数据分析，转入地下的真实操作台。</p>
+                <p>您的核心工作职责，是通过操作【太一 (Taiyi) 临床控制中枢】，为即将进行意识上传的志愿者剔除脑皮层深处的“冗余神经杂波”。</p>
+                <p><strong>在您接管手术台前，请确认：</strong></p>
+                <ol>
+                    <li>您已放弃对临床样本（无论其生物学特征如何）的任何常规同情。</li>
+                    <li>您将严格按照天文节气的毫秒级倒计时，执行神经碳化手术。</li>
+                </ol>
+                <p>如果您已准备好直面数据的血肉实体，请点击下方专属链接，协议将自动签署，您的工作站将被初始化。</p>
+                <hr style="border:0; border-top: 1px solid #eee; margin: 24px 0;">
+                <span class="fatal-link" onclick="triggerGlitch()">[ 接受权限转移并初始化太一工作站 ]</span>
+            `
+        }
+    ],
+    spam: [
+        {
+            id: 'spam1', status: 'unread', senderName: 'Mailer-Daemon', senderEmail: '<postmaster@local>',
+            subject: 'Undelivered Mail Returned to Sender', time: '昨天',
+            body: '<p>诊断代码：550 5.1.1<br>错误描述：目标服务器拒绝接收连接。SSL 握手失败。对方主机时钟与当前标准时间存在严重偏差，无法完成时钟同步 (NTP Error: Time flow anomaly)。</p>'
+        },
+        {
+            id: 'spam2', status: 'read', senderName: 'Apple 订阅服务', senderEmail: '<no-reply@apple.com>',
+            subject: '[收据] 您的 iCloud+ 200GB 储存空间方案账单', time: '6月18日',
+            body: '<p>您已成功续订 iCloud+ 200GB 储存空间方案。<br>扣款金额：￥21.00<br>感谢您的使用。</p>'
+        }
+    ],
+    trash: [
+        {
+            id: 'trash1', status: 'read', senderName: '校园网服务中心', senderEmail: '<network@student.edu.cn>',
+            subject: '【通知】您的校园一卡通即将过期', time: '上周四',
+            body: '<p>同学您好，检测到您即将毕业，您的校园一卡通将于本月底自动注销。如有未结清欠款，请尽快前往后勤处办理。</p>'
+        }
+    ],
+    sent: [], drafts: []
+};
+
+// 动态生成深渊刷屏邮件
+const manicString = "我没有退学".repeat(150);
+for(let i=0; i<10; i++) {
+    emailData.spam.push({
+        id: 'spam_loop_' + i,
+        status: 'unread',
+        senderName: 'Unknown_Sender',
+        senderEmail: '<不可见的地址>',
+        subject: '我没有退学我没有退学我没有退学',
+        time: '6月12日',
+        body: `
+            <p>小林，如果你能看到这封邮件，帮我去跟辅导员说一声。</p>
+            <p>我昨天从监控屏幕的倒影里，看到院里发的通报了。那上面说我因为精神衰弱申请了退学。那是假的，<strong>我根本没有签过任何退学申请！</strong></p>
+            <p>我这段时间只是在跟进沈教授的数据清洗外包项目。我一直在这个项目里，一直在地下，从来没有离开过。但我现在找不到出口了，门禁卡也被注销了。</p>
+            <p>帮帮我，去跟辅导员说我还在做项目，我马上就能完成数据的剥离了。</p>
+            <p>看到邮件回我一下，他们快交班了。</p>
+            <div class="manic-text">${manicString}</div>
+        `
+    });
+}
+
+const listView = document.getElementById('listView');
+const detailView = document.getElementById('detailView');
+
+// 加载文件夹内容
+function loadFolder(folderName, element) {
+    // UI 激活状态切换
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    if(element) element.classList.add('active');
+    
+    // 视图切换
+    detailView.style.display = 'none';
+    listView.style.display = 'flex';
+    listView.innerHTML = '';
+    
+    const emails = emailData[folderName];
+    if(!emails || emails.length === 0) {
+        listView.innerHTML = '<div style="padding: 30px; text-align: center; color: var(--text-muted);">此文件夹为空。</div>';
+        return;
+    }
+
+    emails.forEach(email => {
+        const item = document.createElement('div');
+        item.className = `email-item ${email.status}`;
+        item.innerHTML = `
+            <div class="sender">${email.senderName}</div>
+            <div class="subject">${email.subject}</div>
+            <div class="time">${email.time}</div>
+        `;
+        item.onclick = () => openEmail(email);
+        listView.appendChild(item);
+    });
+}
+
+// 打开邮件详情
+function openEmail(email) {
+    if(email.status === 'unread') email.status = 'read'; // 标记已读
+    listView.style.display = 'none';
+    detailView.style.display = 'block';
+    
+    document.getElementById('d-subject').innerText = email.subject;
+    document.getElementById('d-sender-name').innerText = email.senderName;
+    document.getElementById('d-sender-email').innerText = email.senderEmail;
+    document.getElementById('d-time').innerText = email.time;
+    document.getElementById('d-body').innerHTML = email.body;
+}
+
+// 返回列表
+function backToList() {
+    const activeNav = document.querySelector('.nav-item.active');
+    // 根据激活的左侧菜单重新加载，以刷新已读/未读状态
+    if(activeNav && activeNav.innerText.includes('收件箱')) loadFolder('inbox', activeNav);
+    else if(activeNav && activeNav.innerText.includes('垃圾邮件')) loadFolder('spam', activeNav);
+    else if(activeNav && activeNav.innerText.includes('回收站')) loadFolder('trash', activeNav);
+    else detailView.style.display = 'none', listView.style.display = 'flex';
+}
+
+// 核心转场：视觉剥离与假死
+function triggerGlitch() {
+    const body = document.body;
+    // 步骤1：假死与褪色
+    body.classList.add('glitch-mode');
+    
+    // 模拟尖锐的耳鸣声和乱码替换 (实际开发可引入Audio对象和Canvas洛书动画)
+    setTimeout(() => {
+        document.getElementById('detailView').innerHTML = `
+            <div style="height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                <div style="color: #0f0; font-family: monospace; font-size: 24px; text-shadow: 0 0 10px #0f0; letter-spacing: 10px;">
+                    4 &nbsp;&nbsp; 9 &nbsp;&nbsp; 2<br><br>
+                    3 &nbsp;&nbsp; 5 &nbsp;&nbsp; 7<br><br>
+                    8 &nbsp;&nbsp; 1 &nbsp;&nbsp; 6
+                </div>
+                <div style="margin-top:40px; color:red; font-family:monospace;">> TAIYI KERNEL BOOT: 100%</div>
+            </div>
+        `;
+    }, 1500); // 1.5秒后爆出洛书
+}
+
+// 默认加载收件箱
+window.onload = () => loadFolder('inbox', document.querySelector('.nav-item.active'));
+</script>
+</body>
+</html>
