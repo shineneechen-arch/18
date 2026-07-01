@@ -142,7 +142,6 @@
 
     <!-- 侧边栏 -->
     <div class="sidebar" id="sidebar">
-        <!-- 移动端显示的 Logo -->
         <div class="sidebar-logo-area" style="display: none;" id="mobile-logo">
             <span style="color: #ea4335; font-size: 24px; font-weight: 500; font-family: 'Product Sans', Arial;">Gmail</span>
         </div>
@@ -198,7 +197,7 @@
                     <div>
                         <span id="d-sender-name" class="d-sender-name"></span>
                     </div>
-                    <span id="d-sender-email" class="d-sender-email">发送至 林真</span>
+                    <span id="d-sender-email" class="d-sender-email">发送至 我</span>
                 </div>
             </div>
 
@@ -224,36 +223,31 @@
 // === 动态时间生成引擎 ===
 const now = new Date();
 
-// 格式化：当天显示 "HH:MM"
 function formatToday(date) {
     const h = date.getHours().toString().padStart(2, '0');
     const m = date.getMinutes().toString().padStart(2, '0');
     return `${h}:${m}`;
 }
 
-// 格式化：历史日期显示 "M月D日"
 function formatDate(date) {
     return `${date.getMonth() + 1}月${date.getDate()}日`;
 }
 
-// 获取过去第 N 天的 Date 对象
 function getPastDate(daysAgo) {
     const d = new Date(now);
     d.setDate(d.getDate() - daysAgo);
     return d;
 }
 
-// 计算各封邮件的动态时间
-const timeOffer = formatToday(now);            // 当前系统时间（致命同步）
+const timeOffer = formatToday(now);            // 当前系统时间
 const timeSpam1 = "昨天";                      // 昨天
+const timeSent = formatDate(getPastDate(3));   // 3天前的已发送邮件 (实习申请)
+const timeTrash = formatDate(getPastDate(5));  // 5天前的学校通知
 const timeSpam2 = formatDate(getPastDate(12)); // 12天前的日常订阅账单
 const timeSpam3 = formatDate(getPastDate(18)); // 18天前的学长求救信
-const timeTrash = formatDate(getPastDate(5));  // 5天前的学校通知
 
-// 头像颜色池
 const colors = ['#e53935', '#d81b60', '#8e24aa', '#3949ab', '#039be5', '#00897b', '#43a047', '#f4511e'];
 
-// 生成头像首字母
 function getAvatarChar(name) {
     if(!name) return '?';
     const cleanName = name.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '');
@@ -267,9 +261,9 @@ const emailData = {
             id: 'offer1', status: 'unread',
             senderName: '第十八临床研究中心', senderEmail: '<admin@18th-clinical.local>',
             subject: '【录用通知】深层神经流形与BCI项目 - 核心操作员', 
-            time: timeOffer, // 动态当前时间！
+            time: timeOffer, 
             body: `
-                <p>尊敬的候选人 林真，您好：</p>
+                <p>尊敬的候选人，您好：</p>
                 <p>经过脑波阻抗测试与三轮极端逻辑压力面试，我们非常荣幸地通知您：您已正式被<strong>市第十八人类临床医院 - 联合科研中心</strong>录用。</p>
                 <p>首席科学家沈知行教授亲自查阅了您的背景数据。系统判定，您在处理高维数据模型时，展现出了一种近乎冷酷的绝对理智（Absolute Emotional Decoupling）。</p>
                 <p>我们需要您从幕后的数据分析，转入地下的真实操作台。</p>
@@ -284,7 +278,25 @@ const emailData = {
                     <span class="fatal-link" onclick="triggerGlitch()">[ 接受权限转移并初始化太一工作站 ]</span>
                 </div>
             `,
-            snippet: '尊敬的候选人 林真，您好：经过脑波阻抗测试与三轮极端逻辑压力面试...'
+            snippet: '尊敬的候选人，您好：经过脑波阻抗测试与三轮极端逻辑压力面试...'
+        }
+    ],
+    sent: [
+        {
+            id: 'sent1', status: 'read', 
+            senderName: '我', senderEmail: '<applicant_0104@gmail.com>',
+            subject: '附件：【实习申请】底层架构助理 - 附测试任务源码', 
+            time: timeSent, 
+            body: `
+                <p>沈教授您好：</p>
+                <p>我是陈宇学长推荐来应聘“底层架构助理”实习生岗位的。附件是我的简历，以及您上周布置的入职测试任务（1402个节点数据的清洗脚本与结果日志）。</p>
+                <p>在处理这批测试数据时，我发现底层“噪点”的波动特征非常特殊，带有极强的不规则脉冲，甚至有些接近生物心电波形的痉挛。为了达到您的验收标准，我已经写脚本把这些异常的“生命体征状”杂波全部强行平滑并截断了，目前代码跑通，数据已完全静态化。</p>
+                <p>另外，测试过程中有几个接口权限的问题想请教陈宇学长，但他这几天微信一直没有回复。如果有需要修改的地方，请随时联系我。</p>
+                <p>期待能有机会加入您的项目组。</p>
+                <br>
+                <p>—— <span style="background: #202124; color: #202124; user-select: none;">██</span></p>
+            `,
+            snippet: '沈教授您好：我是陈宇学长推荐来应聘“底层架构助理”实习生岗位的。附件是我的简历...'
         }
     ],
     spam: [
@@ -309,10 +321,10 @@ const emailData = {
             snippet: '同学您好，检测到您即将毕业，您的校园一卡通将于本月底自动注销...'
         }
     ],
-    sent: [], drafts: []
+    drafts: []
 };
 
-// 动态生成深渊循环邮件（时间全部锁定在 18 天前）
+// 动态生成深渊循环邮件
 const manicString = "我没有退学".repeat(150);
 for(let i=0; i<10; i++) {
     emailData.spam.push({
@@ -322,8 +334,8 @@ for(let i=0; i<10; i++) {
         body: `
             <p>小林，如果你能看到这封邮件，帮我去跟辅导员说一声。</p>
             <p>我昨天从监控屏幕的倒影里，看到院里发的通报了。那上面说我因为精神衰弱申请了退学。那是假的，<strong>我根本没有签过任何退学申请！</strong></p>
-            <p>我这段时间只是在跟进沈教授的数据清洗外包项目。我一直在这个项目里，一直在地下，从来没有离开过。但我现在找不到出口了，门禁卡也被注销了。</p>
-            <p>帮帮我，去跟辅导员说我还在做项目，我马上就能完成数据的剥离了。</p>
+            <p>我这段时间只是在跟进沈教授的测试项目。我一直在这个项目里，一直在地下，从来没有离开过。但我现在找不到出口了，门禁卡也被注销了。</p>
+            <p>帮帮我，去跟辅导员说我还在做测试，我马上就能完成数据的剥离了。</p>
             <p>看到邮件回我一下，他们快交班了。</p>
             <div class="manic-text">${manicString}</div>
         `,
@@ -398,7 +410,7 @@ function openEmail(email, bgColor, avatarChar) {
     
     document.getElementById('d-subject').innerText = email.subject;
     document.getElementById('d-sender-name').innerText = email.senderName;
-    document.getElementById('d-sender-email').innerText = `发件人: ${email.senderEmail} · 发送至 林真`;
+    document.getElementById('d-sender-email').innerText = `发送至 我`;
     document.getElementById('d-time').innerText = email.time;
     document.getElementById('d-body').innerHTML = email.body;
     
@@ -412,6 +424,7 @@ function backToList() {
     if(activeNav && activeNav.innerText.includes('收件箱')) loadFolder('inbox', activeNav);
     else if(activeNav && activeNav.innerText.includes('垃圾邮件')) loadFolder('spam', activeNav);
     else if(activeNav && activeNav.innerText.includes('回收站')) loadFolder('trash', activeNav);
+    else if(activeNav && activeNav.innerText.includes('已发送')) loadFolder('sent', activeNav);
     else { detailView.style.display = 'none'; listView.style.display = 'flex'; }
 }
 
@@ -426,7 +439,6 @@ function triggerGlitch() {
     setTimeout(() => { glitchSys.classList.add('show'); }, 1500);
     setTimeout(() => { 
         alert("转场结束，即将加载 3D 医疗终端... (后续游戏流程)"); 
-        // 实际游戏中可以在这里跳转到游戏主场景的 HTML 文件
         // location.href = "game.html"; 
     }, 4000);
 }
