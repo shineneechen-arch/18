@@ -53,7 +53,6 @@
     .nav-label { flex: 1; font-size: 14px; }
     .nav-count { font-size: 12px; font-weight: 500; }
     
-    /* 激活状态的菜单 */
     .nav-item.active { background: var(--nav-active-bg); color: var(--nav-active-text); }
     .nav-item.active .material-symbols-outlined { color: var(--nav-active-text); font-variation-settings: 'FILL' 1; }
     .nav-item.active .nav-label { font-weight: bold; }
@@ -74,7 +73,6 @@
     .subject { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main); margin-bottom: 2px; }
     .snippet { font-size: 14px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     
-    /* 未读样式 */
     .email-item.unread .sender { font-weight: 700; color: #202124; }
     .email-item.unread .subject { font-weight: 700; color: #202124; }
     .email-item.unread .time { font-weight: 700; color: var(--primary); }
@@ -93,12 +91,33 @@
     .d-sender-email { font-size: 12px; color: var(--text-muted); display: block; margin-top: 2px; }
     .detail-body { font-size: 14px; color: #222; line-height: 1.6; word-wrap: break-word; }
 
+    /* === 附件 UI 样式 === */
+    .attachment-section { margin-top: 32px; border-top: 1px solid #f2f2f2; padding-top: 20px; }
+    .attachment-chip { display: inline-flex; align-items: center; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 16px 8px 12px; cursor: pointer; transition: background 0.2s; background: #fff; }
+    .attachment-chip:hover { background: var(--hover-bg); }
+    .attach-icon { color: #5f6368; font-size: 28px; margin-right: 12px; }
+    .attach-info { display: flex; flex-direction: column; }
+    .attach-name { font-size: 14px; font-weight: 500; color: var(--text-main); }
+    .attach-size { font-size: 12px; color: var(--text-muted); }
+
+    /* === 附件预览浮层 (模态框) === */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
+    .modal-content { background: #1e1e1e; width: 100%; max-width: 700px; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+    .modal-header { background: #2d2d2d; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; color: #fff; }
+    .modal-title { font-size: 14px; font-weight: 500; font-family: monospace; display: flex; align-items: center; gap: 8px; }
+    .modal-close { color: #999; cursor: pointer; transition: color 0.2s; }
+    .modal-close:hover { color: #fff; }
+    .modal-body { padding: 20px; color: #00ff00; font-family: 'Courier New', Courier, monospace; font-size: 13px; line-height: 1.5; height: 400px; overflow-y: auto; }
+    .log-error { color: #ff5555; }
+    .log-warn { color: #ffaa00; }
+    .log-dim { color: #55aa55; }
+
     /* 剧情/乱码专属样式 */
     .manic-text { margin-top: 30px; font-size: 14px; line-height: 1.2; color: #000; font-family: monospace; letter-spacing: -0.5px; word-break: break-all; }
     .fatal-link { display: inline-block; margin-top: 24px; font-weight: bold; color: var(--primary); cursor: pointer; text-decoration: underline; font-size: 15px; padding: 10px 0; }
     .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; color: var(--text-muted); text-align: center; }
 
-    /* === 响应式适配 (移动端优先) === */
+    /* === 响应式适配 === */
     @media (max-width: 768px) {
         .main-content { margin: 0; border-radius: 0; }
         .sidebar { position: fixed; top: 0; bottom: 0; left: 0; transform: translateX(-100%); background: #fff; width: 280px; }
@@ -108,6 +127,7 @@
         .search-bar { margin: 0; border-radius: 24px; background: #edf2fc; padding: 0 8px; }
         .email-detail { padding: 16px; }
         .detail-subject { font-size: 20px; }
+        .modal-body { height: 60vh; font-size: 12px; }
     }
 
     /* === 核心黑屏崩坏转场 (洛书) === */
@@ -127,7 +147,6 @@
 </head>
 <body>
 
-<!-- 顶部搜索栏 -->
 <div class="header">
     <div class="search-bar">
         <span class="material-symbols-outlined" onclick="toggleSidebar()" style="padding: 12px;">menu</span>
@@ -137,10 +156,7 @@
 </div>
 
 <div class="app-body">
-    <!-- 侧边栏遮罩 (移动端用) -->
     <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-
-    <!-- 侧边栏 -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-logo-area" style="display: none;" id="mobile-logo">
             <span style="color: #ea4335; font-size: 24px; font-weight: 500; font-family: 'Product Sans', Arial;">Gmail</span>
@@ -172,12 +188,8 @@
         </div>
     </div>
 
-    <!-- 邮件主内容区 -->
     <div class="main-content">
-        <!-- 列表视图 -->
         <div id="listView" class="email-list"></div>
-        
-        <!-- 详情视图 -->
         <div id="detailView" class="email-detail">
             <div class="detail-top-actions">
                 <span class="material-symbols-outlined" onclick="backToList()">arrow_back</span>
@@ -197,7 +209,7 @@
                     <div>
                         <span id="d-sender-name" class="d-sender-name"></span>
                     </div>
-                    <span id="d-sender-email" class="d-sender-email">发送至 我</span>
+                    <span id="d-sender-email" class="d-sender-email"></span>
                 </div>
             </div>
 
@@ -206,7 +218,45 @@
     </div>
 </div>
 
-<!-- 终极惊悚转场：洛书阵列 -->
+<!-- 附件预览浮层 -->
+<div class="modal-overlay" id="attachment-modal" onclick="closeAttachment(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <div class="modal-title">
+                <span class="material-symbols-outlined" style="font-size: 18px;">terminal</span>
+                clean_log_phase2.txt
+            </div>
+            <span class="material-symbols-outlined modal-close" onclick="closeAttachment()">close</span>
+        </div>
+        <div class="modal-body">
+<span class="log-dim">====================================================<br>
+[SYSTEM] TAIYI BATCH DATA CLEANUP v1.2<br>
+[OPERATOR] TEMP_INTERN_0104<br>
+[TARGET] 1402 NODES (SECTOR 8: GENGONG / 艮宫)<br>
+====================================================</span><br><br>
+> Scanning node #138... <span class="log-dim">STATIC. OK.</span><br>
+> Scanning node #139... <span class="log-dim">STATIC. OK.</span><br>
+> Scanning node #140... <span class="log-error">WARNING: DYNAMIC ANOMALY DETECTED</span><br>
+<span class="log-warn">  >> LOG: Unidentified irregular pulse in data stream.</span><br>
+<span class="log-warn">  >> FREQ: 78 BPM (Accelerating to 120 BPM...)</span><br>
+<span class="log-warn">  >> ERROR: Target attempting to maintain dynamic variance.</span><br><br>
+> <span style="color:#fff;">[USER INPUT]</span> EXECUTING SCRIPT: force_smooth.py<br>
+> Initiating logical truncation protocol...<br>
+> Applying absolute threshold...<br>
+> Severing dynamic resonance link...<br>
+> Flattening pulse variance... <span class="log-warn">60... 40... 15...</span><br>
+> <span class="log-dim">PULSE TERMINATED.</span><br>
+> <span style="color:#fff;">[SUCCESS] Node #140 successfully flattened to absolute zero.</span><br><br>
+> Scanning node #141... <span class="log-dim">STATIC. OK.</span><br>
+<br><span class="log-dim">====================================================<br>
+TASK COMPLETE. 1402 NODES PROCESSED.<br>
+0 ANOMALIES REMAINING. ALL DATA STATIC.<br>
+====================================================</span>
+        </div>
+    </div>
+</div>
+
+<!-- 终极惊悚转场 -->
 <div id="glitch-overlay">
     <div class="glitch-grid" id="glitch-grid">
         <div class="glitch-num">4</div><div class="glitch-num">9</div><div class="glitch-num">2</div>
@@ -220,46 +270,42 @@
 </div>
 
 <script>
-// === 动态时间生成引擎 ===
 const now = new Date();
-
 function formatToday(date) {
     const h = date.getHours().toString().padStart(2, '0');
     const m = date.getMinutes().toString().padStart(2, '0');
     return `${h}:${m}`;
 }
-
 function formatDate(date) {
     return `${date.getMonth() + 1}月${date.getDate()}日`;
 }
-
 function getPastDate(daysAgo) {
     const d = new Date(now);
     d.setDate(d.getDate() - daysAgo);
     return d;
 }
 
-const timeOffer = formatToday(now);            // 当前系统时间
-const timeSpam1 = "昨天";                      // 昨天
-const timeSent = formatDate(getPastDate(3));   // 3天前的已发送邮件 (实习申请)
-const timeTrash = formatDate(getPastDate(5));  // 5天前的学校通知
-const timeSpam2 = formatDate(getPastDate(12)); // 12天前的日常订阅账单
-const timeSpam3 = formatDate(getPastDate(18)); // 18天前的学长求救信
+const timeOffer = formatToday(now);            
+const timeSpam1 = "昨天";                      
+const timeSent = formatDate(getPastDate(3));   
+const timeTrash = formatDate(getPastDate(5));  
+const timeSpam2 = formatDate(getPastDate(12)); 
+const timeSpam3 = formatDate(getPastDate(18)); 
 
 const colors = ['#e53935', '#d81b60', '#8e24aa', '#3949ab', '#039be5', '#00897b', '#43a047', '#f4511e'];
-
 function getAvatarChar(name) {
     if(!name) return '?';
     const cleanName = name.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '');
     return cleanName ? cleanName.charAt(0).toUpperCase() : '?';
 }
 
-// === 模拟邮件数据库 ===
+// 模拟数据库
 const emailData = {
     inbox: [
         {
             id: 'offer1', status: 'unread',
             senderName: '第十八临床研究中心', senderEmail: '<admin@18th-clinical.local>',
+            receiverStr: '发送至 我', // 指定收件人显示逻辑
             subject: '【录用通知】深层神经流形与BCI项目 - 核心操作员', 
             time: timeOffer, 
             body: `
@@ -285,6 +331,7 @@ const emailData = {
         {
             id: 'sent1', status: 'read', 
             senderName: '我', senderEmail: '<applicant_0104@gmail.com>',
+            receiverStr: '发送至 沈知行教授 <shen.zx@18th-clinical.local>', // 修复了这里！
             subject: '附件：【实习申请】底层架构助理 - 附测试任务源码', 
             time: timeSent, 
             body: `
@@ -295,6 +342,16 @@ const emailData = {
                 <p>期待能有机会加入您的项目组。</p>
                 <br>
                 <p>—— <span style="background: #202124; color: #202124; user-select: none;">██</span></p>
+                
+                <div class="attachment-section">
+                    <div class="attachment-chip" onclick="openAttachment()">
+                        <span class="material-symbols-outlined attach-icon">terminal</span>
+                        <div class="attach-info">
+                            <span class="attach-name">clean_log_phase2.txt</span>
+                            <span class="attach-size">14 KB</span>
+                        </div>
+                    </div>
+                </div>
             `,
             snippet: '沈教授您好：我是陈宇学长推荐来应聘“底层架构助理”实习生岗位的。附件是我的简历...'
         }
@@ -302,12 +359,14 @@ const emailData = {
     spam: [
         {
             id: 'spam1', status: 'unread', senderName: 'Mailer-Daemon', senderEmail: '<postmaster@local>',
+            receiverStr: '发送至 我',
             subject: 'Undelivered Mail Returned to Sender', time: timeSpam1,
             body: '<p>诊断代码：550 5.1.1<br>错误描述：目标服务器拒绝接收连接。SSL 握手失败。对方主机时钟与当前标准时间存在严重偏差，无法完成时钟同步 (NTP Error: Time flow anomaly)。</p>',
             snippet: '诊断代码：550 5.1.1 错误描述：目标服务器拒绝接收连接...'
         },
         {
             id: 'spam2', status: 'read', senderName: 'Apple 订阅服务', senderEmail: '<no-reply@apple.com>',
+            receiverStr: '发送至 我',
             subject: '[收据] 您的 iCloud+ 200GB 储存空间方案账单', time: timeSpam2,
             body: '<p>您已成功续订 iCloud+ 200GB 储存空间方案。<br>扣款金额：￥21.00<br>感谢您的使用。</p>',
             snippet: '您已成功续订 iCloud+ 200GB 储存空间方案。扣款金额...'
@@ -316,20 +375,21 @@ const emailData = {
     trash: [
         {
             id: 'trash1', status: 'read', senderName: '校园网服务中心', senderEmail: '<network@student.edu.cn>',
+            receiverStr: '发送至 我',
             subject: '【通知】您的校园一卡通即将过期', time: timeTrash,
             body: '<p>同学您好，检测到您即将毕业，您的校园一卡通将于本月底自动注销。如有未结清欠款，请尽快前往后勤处办理。</p>',
             snippet: '同学您好，检测到您即将毕业，您的校园一卡通将于本月底自动注销...'
         }
-    ],
-    drafts: []
+    ]
 };
 
-// 动态生成深渊循环邮件
+// 生成循环邮件
 const manicString = "我没有退学".repeat(150);
 for(let i=0; i<10; i++) {
     emailData.spam.push({
         id: 'spam_loop_' + i, status: 'unread',
         senderName: 'Unknown_Sender', senderEmail: '<不可见的地址>',
+        receiverStr: '发送至 我',
         subject: '我没有退学我没有退学我没有退学', time: timeSpam3,
         body: `
             <p>小林，如果你能看到这封邮件，帮我去跟辅导员说一声。</p>
@@ -343,7 +403,7 @@ for(let i=0; i<10; i++) {
     });
 }
 
-// === 以下为 UI 与事件控制逻辑 ===
+// UI 逻辑
 const listView = document.getElementById('listView');
 const detailView = document.getElementById('detailView');
 const sidebar = document.getElementById('sidebar');
@@ -354,7 +414,6 @@ function toggleSidebar() {
     sidebar.classList.toggle('open');
     sidebarOverlay.classList.toggle('show');
 }
-
 if(window.innerWidth <= 768) { document.getElementById('mobile-logo').style.display = 'flex'; }
 
 function loadFolder(folderName, element) {
@@ -370,8 +429,8 @@ function loadFolder(folderName, element) {
     listView.style.display = 'flex';
     listView.innerHTML = '';
     
-    const emails = emailData[folderName];
-    if(!emails || emails.length === 0) {
+    const emails = emailData[folderName] || [];
+    if(emails.length === 0) {
         listView.innerHTML = `
             <div class="empty-state">
                 <span class="material-symbols-outlined" style="font-size: 64px; color: #e0e0e0; margin-bottom: 16px;">all_inbox</span>
@@ -383,10 +442,8 @@ function loadFolder(folderName, element) {
     emails.forEach((email) => {
         const item = document.createElement('div');
         item.className = `email-item ${email.status}`;
-        
         const color = colors[email.senderName.length % colors.length];
         const avatarChar = getAvatarChar(email.senderName);
-
         item.innerHTML = `
             <div class="sender-avatar" style="background-color: ${color}">${avatarChar}</div>
             <div class="email-info">
@@ -410,7 +467,10 @@ function openEmail(email, bgColor, avatarChar) {
     
     document.getElementById('d-subject').innerText = email.subject;
     document.getElementById('d-sender-name').innerText = email.senderName;
-    document.getElementById('d-sender-email').innerText = `发送至 我`;
+    
+    // 动态显示收件人，如果是发件箱就是发给沈教授，其他是发给我
+    document.getElementById('d-sender-email').innerText = email.receiverStr || `发送至 我`;
+    
     document.getElementById('d-time').innerText = email.time;
     document.getElementById('d-body').innerHTML = email.body;
     
@@ -428,6 +488,15 @@ function backToList() {
     else { detailView.style.display = 'none'; listView.style.display = 'flex'; }
 }
 
+// 附件控制逻辑
+function openAttachment() {
+    document.getElementById('attachment-modal').style.display = 'flex';
+}
+function closeAttachment(e) {
+    if(e && e.target !== document.getElementById('attachment-modal')) return;
+    document.getElementById('attachment-modal').style.display = 'none';
+}
+
 function triggerGlitch() {
     const glitchOverlay = document.getElementById('glitch-overlay');
     const glitchGrid = document.getElementById('glitch-grid');
@@ -439,7 +508,6 @@ function triggerGlitch() {
     setTimeout(() => { glitchSys.classList.add('show'); }, 1500);
     setTimeout(() => { 
         alert("转场结束，即将加载 3D 医疗终端... (后续游戏流程)"); 
-        // location.href = "game.html"; 
     }, 4000);
 }
 
