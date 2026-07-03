@@ -519,7 +519,9 @@ function triggerGlitch() {
     setTimeout(() => { glitchGrid.classList.add('show'); }, 300);
     setTimeout(() => { glitchSys.classList.add('show'); }, 1500);
     setTimeout(() => { 
-        alert("转场结束，即将加载 3D 医疗终端... (后续游戏流程)"); 
+// 乱码持续一段时间后，直接无缝跳转到终端页面
+    setTimeout(() => { 
+        window.location.href = "terminal.html"; 
     }, 4000);
 }
 
