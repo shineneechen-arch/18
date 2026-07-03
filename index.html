@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>收件箱 (1) - Gmail</title>
-<!-- 引入 Google Material Icons -->
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
 <style>
     /* 基础重置与 MD3 变量 */
@@ -225,7 +224,6 @@
     </div>
 </div>
 
-<!-- 附件预览浮层 (仿 Word 多页滚动) -->
 <div class="modal-overlay" id="attachment-modal" onclick="closeAttachment(event)">
     <div class="modal-content" onclick="event.stopPropagation()">
         <div class="modal-header">
@@ -237,7 +235,6 @@
         </div>
         
         <div class="modal-body-container">
-            <!-- 第一页 -->
             <div class="document-page">
                 <div class="doc-title">临床影像病灶标注作业日志</div>
                 <div class="doc-subtitle">
@@ -255,7 +252,6 @@
                 <div class="doc-footer">- 1 -</div>
             </div>
 
-            <!-- 第二页 -->
             <div class="document-page">
                 <div class="doc-h2">三、 遗留问题与交接：</div>
                 <div class="doc-p">最近在实验室微信群里一直联系不上陈宇师兄，他之前负责的临床数据接口一直处于离线状态。关于他在清理这些病灶时的手术习惯，以及针对这类“高频跳动阴影”的深层判定逻辑，我还有一些细节想请教，但一直没得到回复。</div>
@@ -271,7 +267,6 @@
     </div>
 </div>
 
-<!-- 终极惊悚转场 -->
 <div id="glitch-overlay">
     <div class="glitch-grid" id="glitch-grid">
         <div class="glitch-num">4</div><div class="glitch-num">9</div><div class="glitch-num">2</div>
@@ -518,8 +513,8 @@ function triggerGlitch() {
     
     setTimeout(() => { glitchGrid.classList.add('show'); }, 300);
     setTimeout(() => { glitchSys.classList.add('show'); }, 1500);
-    setTimeout(() => { 
-// 乱码持续一段时间后，直接无缝跳转到终端页面
+    
+    // 修复了这里的 setTimeout 嵌套语法问题
     setTimeout(() => { 
         window.location.href = "terminal.html"; 
     }, 4000);
