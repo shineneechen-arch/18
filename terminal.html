@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAIYI KERNEL - SYSTEM BOOT</title>
+<style>
+    :root {
+        /* 医疗终端的幽绿色 */
+        --term-color: #4af626;
+        --term-glow: 0 0 10px rgba(74, 246, 38, 0.5);
+        --term-error: #ff3333;
+        --term-error-glow: 0 0 10px rgba(255, 51, 51, 0.6);
+    }
+
+    body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background-color: #050505;
+        color: var(--term-color);
+        font-family: "Courier New", Courier, monospace;
+        font-size: 16px;
+        overflow: hidden;
+    }
+
+    /* 模拟老旧 CRT 显示器的扫描线和轻微闪烁 */
+    .crt-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: linear-gradient(
+            rgba(18, 16, 16, 0) 50%, 
+            rgba(0, 0, 0, 0.25) 50%), 
+            linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+        background-size: 100% 4px, 6px 100%;
+        pointer-events: none;
+        z-index: 100;
+        animation: flicker 0.15s infinite;
+    }
+
+    @keyframes flicker {
+        0% { opacity: 0.95; }
+        100% { opacity: 1; }
+    }
+
+    .terminal-container {
+        padding: 40px;
+        max-width: 800px;
+        margin: 0 auto;
+        height: 100%;
+        box-sizing: border-box;
+        text-shadow: var(--term-glow);
+        line-height: 1.8;
+    }
+
+    .line {
+        margin-bottom: 8px;
+        white-space: pre-wrap;
+        word-break: break-all;
+    }
+
+    .error-text {
+        color: var(--term-error);
+        text-shadow: var(--term-error-glow);
+    }
+
+    /* 输入行样式 */
+    .input-line {
+        display: none; /* 初始隐藏，等打字机打完再显示 */
+        align-items: center;
+        margin-top: 20px;
+    }
+
+    .input-prompt {
+        margin-right: 10px;
+        font-weight: bold;
+    }
+
+    input[type="text"] {
+        background: transparent;
+        border: none;
+        color: var(--term-color);
+        font-family: "Courier New", Courier, monospace;
+        font-size: 16px;
+        outline: none;
+        text-shadow: var(--term-glow);
+        width: 200px;
+        border-bottom: 2px solid var(--term-color);
+    }
+
+    /* 模拟光标闪烁 */
+    .cursor {
+        display: inline-block;
+        width: 10px;
+        height: 18px;
+        background-color: var(--term-color);
+        vertical-align: middle;
+        animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
+    }
+
+    /* 契约成立时的红屏暴走效果 */
+    .blood-screen {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background-color: #ff0000;
+        mix-blend-mode: multiply;
+        z-index: 200;
+        display: none;
+        pointer-events: none;
+        animation: bloodPulse 0.1s infinite alternate;
+    }
+
+    @keyframes bloodPulse {
+        0% { opacity: 0.8; }
+        100% { opacity: 1; }
+    }
+</style>
+</head>
+<body>
+
+<div class="crt-overlay"></div>
+<div class="blood-screen" id="bloodScreen"></div>
+
+<div class="terminal-container" id="terminal">
+    </div>
+
+<script>
+    const terminal = document.getElementById('terminal');
+    
+    // 启动时的系统日志
+    const bootSequence = [
+        "> [TAIYI KERNEL] 核心系统自检启动...",
+        "> 物理服务器连接... OK.",
+        "> 地下18层临床控制中枢... 旁路接管成功。",
+        "> 活体样本生命维持系统... 锁定。",
+        "> 超声靶向碳化协议... 待命。",
+        " ",
+        "> 警告：本终端操作将直接对物理现实产生不可逆的因果干涉。",
+        "> 正在读取前端接口数据...",
+        "> 拦截到待处理异常节点：#140 (艮宫坐标系)。",
+        " ",
+        "<span class='error-text'>> 致命错误：操作员身份未锚定。</span>",
+        "<span class='error-text'>> 必须进行因果律绑定，以防高维反噬。</span>"
+    ];
+
+    let currentLine = 0;
+
+    // 打字机效果
+    function typeLine() {
+        if (currentLine < bootSequence.length) {
+            const lineDiv = document.createElement('div');
+            lineDiv.className = 'line';
+            lineDiv.innerHTML = bootSequence[currentLine];
+            terminal.appendChild(lineDiv);
+            currentLine++;
+            // 模拟系统读取的停顿感
+            const delay = bootSequence[currentLine - 1].trim() === "" ? 200 : Math.random() * 300 + 100;
+            setTimeout(typeLine, delay);
+        } else {
+            showInput();
+        }
+    }
+
+    // 显示输入框
+    function showInput() {
+        const inputContainer = document.createElement('div');
+        inputContainer.className = 'input-line';
+        inputContainer.style.display = 'flex';
+        
+        inputContainer.innerHTML = `
+            <span class="input-prompt">[ 系统请求：请输入主刀医师真名 ] ></span>
+            <input type="text" id="nameInput" autocomplete="off" spellcheck="false" maxlength="10">
+        `;
+        
+        terminal.appendChild(inputContainer);
+        const inputField = document.getElementById('nameInput');
+        inputField.focus();
+
+        // 监听回车键
+        inputField.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const val = this.value.trim();
+                if (val !== "") {
+                    this.disabled = true; // 锁定当前输入框
+                    processInput(val);
+                }
+            }
+        });
+        
+        // 保持永远聚焦
+        inputField.addEventListener('blur', () => inputField.focus());
+    }
+
+    // 处理玩家的输入逻辑
+    function processInput(name) {
+        const lineDiv = document.createElement('div');
+        lineDiv.className = 'line';
+        lineDiv.style.marginTop = "10px";
+        
+        if (name === '林真') {
+            // 输入正确：因果锁定！
+            lineDiv.innerHTML = `<span class="error-text">> 身份签名匹配成功。</span><br><span class="error-text">> 警告：因果律已锚定。林真，您已与第18层手术台永久物理锁定。</span>`;
+            terminal.appendChild(lineDiv);
+            
+            // 触发红屏暴走
+            setTimeout(() => {
+                document.getElementById('bloodScreen').style.display = 'block';
+                document.body.style.color = "#000";
+                setTimeout(() => {
+                    alert("契约成立！即将跳转至 3D 临床手术台 UI...");
+                    // window.location.href = "surgery_ui.html"; // 后续跳转逻辑
+                }, 2000);
+            }, 1000);
+
+        } else {
+            // 输入错误：系统拒绝
+            lineDiv.innerHTML = `> [ 拒绝访问 ] 基因与命理序列不匹配。查无此人：${name}。<br>> 请勿伪造身份。`;
+            terminal.appendChild(lineDiv);
+            
+            // 重新显示输入框
+            setTimeout(() => {
+                // 移除旧输入框的ID，防止冲突
+                document.getElementById('nameInput').removeAttribute('id');
+                showInput();
+            }, 1000);
+        }
+    }
+
+    // 延迟 1 秒后开始启动打字机
+    window.onload = () => {
+        setTimeout(typeLine, 1000);
+    };
+</script>
+
+</body>
+</html>
